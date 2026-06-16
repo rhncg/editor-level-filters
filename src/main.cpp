@@ -13,9 +13,11 @@ bool filterXL = false;
 bool filterVerified = false;
 bool filterUnverified = false;
 
+std::string filterSongID = "";
+
 bool anyFilterActive() {
     return filterTiny || filterShort || filterMedium || filterLong ||
-           filterXL || filterVerified || filterUnverified;
+           filterXL || filterVerified || filterUnverified || !filterSongID.empty();
 }
 
 bool levelMatchesFilters(GJGameLevel *level) {
@@ -55,7 +57,14 @@ bool levelMatchesFilters(GJGameLevel *level) {
             matchesVerification = true;
     }
 
-    return matchesLength && matchesVerification;
+    bool matchesSongID = false;
+    if (filterSongID.empty()) {
+        matchesSongID = true;
+    } else {
+        matchesSongID = std::to_string(level->m_songID) == filterSongID;
+    }
+
+    return matchesLength && matchesVerification && matchesSongID;
 }
 } // namespace FilterManager
 
@@ -78,7 +87,7 @@ CCMenuItemToggler *createTextToggler(const char *text, int tag,
 class FilterPopup : public geode::Popup {
   protected:
     bool init() {
-        if (!Popup::init(360.f, 125.f))
+        if (!Popup::init(360.f, 160.f))
             return false;
 
         this->setTitle("Select Filters");
@@ -86,13 +95,13 @@ class FilterPopup : public geode::Popup {
         auto lengthBg = NineSlice::create("square02b_001.png", {0, 0, 80, 80});
         lengthBg->setColor({123, 60, 31});
         lengthBg->setContentSize({340, 30});
-        m_mainLayer->addChildAtPosition(lengthBg, Anchor::Center, {0, -30});
+        m_mainLayer->addChildAtPosition(lengthBg, Anchor::Center, {0, -50});
 
         auto lengthBtnMenu = CCMenu::create();
         lengthBtnMenu->setLayout(RowLayout::create()->setGap(15.f));
         lengthBtnMenu->setContentSize({340, 30});
         m_mainLayer->addChildAtPosition(lengthBtnMenu, Anchor::Center,
-                                        {0, -30});
+                                        {0, -50});
 
         auto tinyTglr = createTextToggler("Tiny", 1, this,
                                           menu_selector(FilterPopup::onToggle));
@@ -123,13 +132,13 @@ class FilterPopup : public geode::Popup {
             NineSlice::create("square02b_001.png", {0, 0, 80, 80});
         verifiedBg->setColor({123, 60, 31});
         verifiedBg->setContentSize({225, 30});
-        m_mainLayer->addChildAtPosition(verifiedBg, Anchor::Center, {0, 10});
+        m_mainLayer->addChildAtPosition(verifiedBg, Anchor::Center, {0, -10});
 
         auto verifiedBtnMenu = CCMenu::create();
         verifiedBtnMenu->setLayout(RowLayout::create()->setGap(15.f));
         verifiedBtnMenu->setContentSize({225, 30});
         m_mainLayer->addChildAtPosition(verifiedBtnMenu, Anchor::Center,
-                                        {0, 10});
+                                        {0, -10});
 
         auto verifiedTglr = createTextToggler(
             "Verified", 6, this, menu_selector(FilterPopup::onToggle));
@@ -141,10 +150,39 @@ class FilterPopup : public geode::Popup {
         unverifiedTglr->toggle(FilterManager::filterUnverified);
         verifiedBtnMenu->addChild(unverifiedTglr);
 
+        auto trashMenu = CCMenu::create();
+        m_mainLayer->addChildAtPosition(trashMenu, Anchor::TopRight);
+        auto trashSpr =
+            CCSprite::createWithSpriteFrameName("GJ_trashBtn_001.png");
+        auto trashBtn = CCMenuItemSpriteExtra::create(
+            trashSpr, this, menu_selector(FilterPopup::onTrash));
+
+        trashMenu->addChild(trashBtn);
+
+        auto songInputMenu = CCMenu::create();
+        auto songInput = TextInput::create(200.f, "Song ID");
+
+        songInput->setCallback(
+            [this](std::string const &text) { FilterPopup::onType(text); });
+        songInput->setString(FilterManager::filterSongID);
+
+        songInputMenu->addChild(songInput);
+        m_mainLayer->addChildAtPosition(songInputMenu, Anchor::Center, {0, 30});
+
+        songInputMenu->updateLayout();
+        trashMenu->updateLayout();
         lengthBtnMenu->updateLayout();
         verifiedBtnMenu->updateLayout();
 
         return true;
+    }
+
+    void onType(std::string const &text) {
+        if (text.empty()) {
+            FilterManager::filterSongID = "";
+        } else {
+            FilterManager::filterSongID = text;
+        }
     }
 
     void onToggle(CCObject *sender) {
@@ -177,6 +215,30 @@ class FilterPopup : public geode::Popup {
         case 7:
             FilterManager::filterUnverified = active;
             break;
+        }
+    }
+
+    void onTrash(CCObject *sender) {
+        FilterManager::filterTiny = false;
+        FilterManager::filterShort = false;
+        FilterManager::filterMedium = false;
+        FilterManager::filterLong = false;
+        FilterManager::filterXL = false;
+        FilterManager::filterVerified = false;
+        FilterManager::filterUnverified = false;
+        FilterManager::filterSongID = "";
+        for (auto node : CCArrayExt<CCNode *>(m_mainLayer->getChildren())) {
+            if (auto menu = typeinfo_cast<CCMenu *>(node)) {
+                for (auto child : CCArrayExt<CCNode *>(menu->getChildren())) {
+                    if (auto toggler =
+                            typeinfo_cast<CCMenuItemToggler *>(child)) {
+                        toggler->toggle(false);
+                    }
+                    if (auto input = typeinfo_cast<TextInput *>(child)) {
+                        input->setString("");
+                    }
+                }
+            }
         }
     }
 
