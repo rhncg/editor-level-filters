@@ -266,9 +266,7 @@ class $modify(ModLevelBrowserLayer, LevelBrowserLayer) {
                 layout->setAxisAlignment(AxisAlignment::Even);
                 layout->setAxisReverse(true);
                 layout->setGap(10.f);
-                // layout->setAxisAlignment(AxisAlignment::Even);
-                // auto layout = typeinfo_cast<RowLayout
-                // *>(menu->getLayout());
+
                 menu->setLayout(layout);
                 menu->setPositionX(25.f);
                 menu->updateLayout();
