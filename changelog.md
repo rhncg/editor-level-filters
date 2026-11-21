@@ -1,3 +1,6 @@
+# 1.1.1
+- Support for Geode v6
+
 # 1.1.0
 - Added button to clear filters
 - Added filtering by song ID
