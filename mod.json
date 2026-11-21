@@ -3,7 +3,6 @@
 	"gd": {
 		"win": "2.2091",
 		"android": "2.2091",
-		"mac": "2.2091",
 		"ios": "2.2091"
 	},
 	"id": "rcg21.editor-level-filters",
@@ -11,6 +10,7 @@
 	"version": "v1.1.1",
 	"developer": "RCG21",
 	"tags": ["offline", "enhancement", "utility"],
+	"links": {"source": "https://github.com/rhncg/editor-level-filters"},
 	"description": "Allows you to filter your created levels",
 	"dependencies": {
 		"geode.node-ids": ">=v1.23.3"
